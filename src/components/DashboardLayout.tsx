@@ -1,19 +1,20 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  LayoutDashboard,
+  Award,
+  Home,
   FileText,
   Briefcase,
   Users,
   Building2,
-  Award,
   Bell,
-  User,
-  LogOut,
-  Search,
   Settings,
-  Calendar,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  BarChart3,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -24,6 +25,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -31,67 +33,111 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getNavItems = () => {
+    const common = [
+      { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Bell, label: 'Notifications', path: '/dashboard/notifications' },
+      { icon: Settings, label: 'Profile', path: '/dashboard/profile' },
+    ];
+
     switch (profile?.role) {
       case 'student':
         return [
-          { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { path: '/dashboard/projects', label: 'My Projects', icon: FileText },
-          { path: '/dashboard/internships', label: 'Internships', icon: Briefcase },
-          { path: '/dashboard/mentorship', label: 'Mentorship', icon: Users },
-          { path: '/dashboard/clubs', label: 'Clubs', icon: Building2 },
-          { path: '/dashboard/explore', label: 'Explore', icon: Search },
+          ...common.slice(0, 1),
+          { icon: FileText, label: 'My Projects', path: '/dashboard/projects' },
+          { icon: Briefcase, label: 'Internships', path: '/dashboard/internships' },
+          { icon: Users, label: 'Mentorship', path: '/dashboard/mentorship' },
+          { icon: Building2, label: 'Clubs', path: '/dashboard/clubs' },
+          { icon: Search, label: 'Explore', path: '/dashboard/explore' },
+          ...common.slice(1),
         ];
       case 'mentor':
         return [
-          { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { path: '/dashboard/mentees', label: 'Mentees', icon: Users },
-          { path: '/dashboard/explore', label: 'Explore', icon: Search },
+          ...common.slice(0, 1),
+          { icon: Users, label: 'Mentees', path: '/dashboard/mentees' },
+          { icon: FileText, label: 'Projects', path: '/dashboard/projects' },
+          { icon: Search, label: 'Students', path: '/dashboard/students' },
+          ...common.slice(1),
         ];
       case 'startup':
         return [
-          { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { path: '/dashboard/post-internship', label: 'Post Internship', icon: Briefcase },
-          { path: '/dashboard/applications', label: 'Applications', icon: FileText },
-          { path: '/dashboard/talent', label: 'Find Talent', icon: Search },
+          ...common.slice(0, 1),
+          { icon: Briefcase, label: 'Post Internship', path: '/dashboard/post-internship' },
+          { icon: FileText, label: 'Applications', path: '/dashboard/applications' },
+          { icon: Search, label: 'Find Talent', path: '/dashboard/talent' },
+          ...common.slice(1),
         ];
       case 'club_leader':
         return [
-          { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { path: '/dashboard/club', label: 'My Club', icon: Building2 },
-          { path: '/dashboard/members', label: 'Members', icon: Users },
-          { path: '/dashboard/events', label: 'Events', icon: Calendar },
+          ...common.slice(0, 1),
+          { icon: Building2, label: 'My Club', path: '/dashboard/club' },
+          { icon: Users, label: 'Members', path: '/dashboard/members' },
+          { icon: FileText, label: 'Events', path: '/dashboard/events' },
+          { icon: Search, label: 'Explore', path: '/dashboard/explore' },
+          ...common.slice(1),
         ];
       case 'admin':
         return [
-          { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-          { path: '/dashboard/users', label: 'Users', icon: Users },
-          { path: '/dashboard/analytics', label: 'Analytics', icon: FileText },
+          ...common.slice(0, 1),
+          { icon: Users, label: 'Users', path: '/dashboard/users' },
+          { icon: Building2, label: 'Clubs', path: '/dashboard/clubs' },
+          { icon: FileText, label: 'Projects', path: '/dashboard/projects' },
+          { icon: Briefcase, label: 'Internships', path: '/dashboard/internships' },
+          { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+          ...common.slice(1),
         ];
       default:
-        return [];
+        return common;
     }
   };
 
   const navItems = getNavItems();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Side Navigation */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <Award className="w-6 h-6 text-primary" />
-            <span className="text-lg font-semibold text-foreground">TalentBridge</span>
-          </Link>
+    <div className="min-h-screen bg-muted/30">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-card border-b z-20 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Award className="w-8 h-8 text-primary" />
+            <span className="font-bold text-xl text-foreground">TalentBridge</span>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-md hover:bg-muted"
+          >
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      <div
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-10 lg:hidden transition-opacity ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 bottom-0 w-64 bg-card border-r border-border z-30 transition-transform lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Logo - Desktop Only */}
+        <div className="p-6 border-b border-border hidden lg:block">
+          <div className="flex items-center space-x-2">
+            <Award className="w-8 h-8 text-primary" />
+            <span className="font-bold text-xl text-foreground">TalentBridge</span>
+          </div>
         </div>
 
         {/* User Info */}
-        <div className="p-6 border-b border-border">
+        <div className="p-4 border-b border-border mt-16 lg:mt-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-primary">
-                {profile?.full_name?.charAt(0) || 'U'}
+              <span className="text-primary font-semibold">
+                {profile?.full_name?.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
@@ -105,24 +151,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Navigation */}
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           {navItems.map((item) => {
-            const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
                   isActive
-                    ? 'bg-primary/10 text-primary font-medium'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-foreground hover:bg-muted'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm">{item.label}</span>
+                <item.icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{item.label}</span>
               </Link>
             );
           })}
@@ -132,17 +177,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="p-4 border-t border-border">
           <button
             onClick={handleSignOut}
-            className="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-foreground hover:bg-muted w-full"
+            className="flex items-center space-x-3 px-3 py-2 rounded-md text-foreground hover:bg-muted w-full transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-sm">Sign Out</span>
+            <span className="text-sm font-medium">Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 min-h-screen">
-        {children}
+      <main className="lg:ml-64 pt-16 lg:pt-0">
+        <div className="p-6">{children}</div>
       </main>
     </div>
   );
