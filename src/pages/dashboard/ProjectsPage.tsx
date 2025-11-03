@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../contexts/AuthContext";
 import { Plus, Edit, Trash2, ExternalLink, Github } from "lucide-react";
 
