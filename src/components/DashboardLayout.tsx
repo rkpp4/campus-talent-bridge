@@ -75,94 +75,75 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = getNavItems();
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Top Navigation */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <Award className="w-8 h-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">TalentBridge</span>
-            </Link>
+    <div className="min-h-screen bg-background">
+      {/* Side Navigation */}
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-border">
+          <Link to="/dashboard" className="flex items-center space-x-2">
+            <Award className="w-6 h-6 text-primary" />
+            <span className="text-lg font-semibold text-foreground">TalentBridge</span>
+          </Link>
+        </div>
 
-            {/* Right side actions */}
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/dashboard/notifications"
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-              >
-                <Bell className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/dashboard/profile"
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-              >
-                <User className="w-5 h-5" />
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+        {/* User Info */}
+        <div className="p-6 border-b border-border">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-primary">
+                {profile?.full_name?.charAt(0) || 'U'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {profile?.full_name}
+              </p>
+              <p className="text-xs text-muted-foreground capitalize">
+                {profile?.role?.replace('_', ' ')}
+              </p>
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Side Navigation */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            <nav className="bg-card rounded-lg border border-border p-4 space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-            {/* User Info Card */}
-            <div className="mt-4 bg-card rounded-lg border border-border p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {profile?.full_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {profile?.role?.replace('_', ' ')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1 min-w-0">
-            <div className="bg-card rounded-lg border border-border p-6">
-              {children}
-            </div>
-          </main>
+        {/* Sign Out */}
+        <div className="p-4 border-t border-border">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-foreground hover:bg-muted w-full"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm">Sign Out</span>
+          </button>
         </div>
-      </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="ml-64 min-h-screen">
+        {children}
+      </main>
     </div>
   );
 }
