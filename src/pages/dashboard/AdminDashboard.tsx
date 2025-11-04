@@ -1,23 +1,41 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   Users,
   Briefcase,
   FileText,
   Building2,
   TrendingUp,
+  Plus,
+  UserPlus,
 } from "lucide-react";
 
 export function AdminDashboard() {
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     users: 0,
     students: 0,
     mentors: 0,
     startups: 0,
     clubs: 0,
+    clubLeaders: 0,
     projects: 0,
     internships: 0,
     applications: 0,
+  });
+  const [isCreateClubOpen, setIsCreateClubOpen] = useState(false);
+  const [isAssignLeaderOpen, setIsAssignLeaderOpen] = useState(false);
+  const [newClub, setNewClub] = useState({ name: "", description: "" });
+  const [leaderData, setLeaderData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    clubId: "",
   });
 
   useEffect(() => {
@@ -30,6 +48,7 @@ export function AdminDashboard() {
       studentsRes,
       mentorsRes,
       startupsRes,
+      clubLeadersRes,
       clubsRes,
       projectsRes,
       internshipsRes,
@@ -48,6 +67,10 @@ export function AdminDashboard() {
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("role", "startup"),
+      supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "club_leader"),
       supabase.from("clubs").select("id", { count: "exact", head: true }),
       supabase
         .from("micro_projects")
@@ -63,6 +86,7 @@ export function AdminDashboard() {
       students: studentsRes.count || 0,
       mentors: mentorsRes.count || 0,
       startups: startupsRes.count || 0,
+      clubLeaders: clubLeadersRes.count || 0,
       clubs: clubsRes.count || 0,
       projects: projectsRes.count || 0,
       internships: internshipsRes.count || 0,
@@ -70,10 +94,167 @@ export function AdminDashboard() {
     });
   };
 
+  const handleCreateClub = async () => {
+    if (!newClub.name.trim()) {
+      toast({ title: "Error", description: "Club name is required", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("clubs").insert({
+      name: newClub.name,
+      description: newClub.description,
+      is_approved: true,
+    });
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to create club", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Club created successfully" });
+      setNewClub({ name: "", description: "" });
+      setIsCreateClubOpen(false);
+      fetchStats();
+    }
+  };
+
+  const handleAssignLeader = async () => {
+    if (!leaderData.fullName || !leaderData.email || !leaderData.password || !leaderData.clubId) {
+      toast({ title: "Error", description: "All fields are required", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: leaderData.email,
+        password: leaderData.password,
+        options: {
+          data: {
+            full_name: leaderData.fullName,
+            role: "club_leader",
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // Update club with leader_id
+      const { error: clubError } = await supabase
+        .from("clubs")
+        .update({ leader_id: authData.user?.id })
+        .eq("id", leaderData.clubId);
+
+      if (clubError) throw clubError;
+
+      toast({
+        title: "Success",
+        description: `Club leader created. Email: ${leaderData.email}, Password: ${leaderData.password}`,
+      });
+      
+      setLeaderData({ fullName: "", email: "", password: "", clubId: "" });
+      setIsAssignLeaderOpen(false);
+      fetchStats();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-      <p className="text-gray-600 mb-8">Platform overview and analytics</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Platform overview and analytics</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isCreateClubOpen} onOpenChange={setIsCreateClubOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Club
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Club</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="text-sm font-medium">Club Name</label>
+                  <Input
+                    value={newClub.name}
+                    onChange={(e) => setNewClub({ ...newClub, name: e.target.value })}
+                    placeholder="Enter club name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Description</label>
+                  <Textarea
+                    value={newClub.description}
+                    onChange={(e) => setNewClub({ ...newClub, description: e.target.value })}
+                    placeholder="Enter club description"
+                  />
+                </div>
+                <Button onClick={handleCreateClub} className="w-full">
+                  Create Club
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAssignLeaderOpen} onOpenChange={setIsAssignLeaderOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Assign Club Leader
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Assign Club Leader</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="text-sm font-medium">Full Name</label>
+                  <Input
+                    value={leaderData.fullName}
+                    onChange={(e) => setLeaderData({ ...leaderData, fullName: e.target.value })}
+                    placeholder="Leader's full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    type="email"
+                    value={leaderData.email}
+                    onChange={(e) => setLeaderData({ ...leaderData, email: e.target.value })}
+                    placeholder="leader@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Password</label>
+                  <Input
+                    type="text"
+                    value={leaderData.password}
+                    onChange={(e) => setLeaderData({ ...leaderData, password: e.target.value })}
+                    placeholder="Create a password"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Club ID</label>
+                  <Input
+                    value={leaderData.clubId}
+                    onChange={(e) => setLeaderData({ ...leaderData, clubId: e.target.value })}
+                    placeholder="Enter club ID from clubs page"
+                  />
+                </div>
+                <Button onClick={handleAssignLeader} className="w-full">
+                  Create Leader Account
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -147,6 +328,12 @@ export function AdminDashboard() {
               <span className="text-sm text-gray-600">Startups</span>
               <span className="text-sm font-medium text-gray-900">
                 {stats.startups}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Club Leaders</span>
+              <span className="text-sm font-medium text-gray-900">
+                {stats.clubLeaders}
               </span>
             </div>
           </div>
