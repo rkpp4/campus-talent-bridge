@@ -38,7 +38,21 @@ export function MentorDashboard() {
   };
 
   const handleRequest = async (id: string, status: "approved" | "rejected") => {
-    await supabase.from("mentorship_requests").update({ status }).eq("id", id);
+    const { error } = await supabase.from("mentorship_requests").update({ status }).eq("id", id);
+    
+    if (!error && status === "approved") {
+      // Find the request to get student_id
+      const request = requests.find(r => r.id === id);
+      if (request) {
+        // Create chat conversation
+        await supabase.from("chat_conversations").insert({
+          mentor_id: profile?.id,
+          student_id: request.student_id,
+          mentorship_request_id: id,
+        });
+      }
+    }
+    
     fetchData();
   };
 

@@ -15,6 +15,7 @@ import {
   X,
   Search,
   BarChart3,
+  MessageCircle,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -46,6 +47,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           { icon: FileText, label: 'My Projects', path: '/dashboard/projects' },
           { icon: Briefcase, label: 'Internships', path: '/dashboard/internships' },
           { icon: Users, label: 'Mentorship', path: '/dashboard/mentorship' },
+          { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages' },
           { icon: Building2, label: 'Clubs', path: '/dashboard/clubs' },
           { icon: Search, label: 'Explore', path: '/dashboard/explore' },
           ...common.slice(1),
@@ -54,6 +56,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return [
           ...common.slice(0, 1),
           { icon: Users, label: 'Mentees', path: '/dashboard/mentees' },
+          { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages' },
           { icon: FileText, label: 'Projects', path: '/dashboard/projects' },
           { icon: Search, label: 'Students', path: '/dashboard/students' },
           ...common.slice(1),
@@ -61,7 +64,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'startup':
         return [
           ...common.slice(0, 1),
-          { icon: Briefcase, label: 'Post Internship', path: '/dashboard/post-internship' },
+          { icon: Briefcase, label: 'Internships', path: '/dashboard/post-internship' },
           { icon: FileText, label: 'Applications', path: '/dashboard/applications' },
           { icon: Search, label: 'Find Talent', path: '/dashboard/talent' },
           ...common.slice(1),
@@ -79,7 +82,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return [
           ...common.slice(0, 1),
           { icon: Users, label: 'Users', path: '/dashboard/users' },
-          { icon: Building2, label: 'Clubs', path: '/dashboard/clubs' },
+          { icon: Building2, label: 'Clubs', path: '/dashboard/admin-clubs' },
           { icon: FileText, label: 'Projects', path: '/dashboard/projects' },
           { icon: Briefcase, label: 'Internships', path: '/dashboard/internships' },
           { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },

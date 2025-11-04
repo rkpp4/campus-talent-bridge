@@ -22,6 +22,12 @@ import {
   ClubLeaderDashboard,
   AdminDashboard,
   ExplorePage,
+  MessagesPage,
+  MenteesPage,
+  StudentsPage,
+  TalentPage,
+  AdminClubsPage,
+  AdminUsersPage,
 } from "./pages/dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -54,16 +60,18 @@ function DashboardRouter() {
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/internships" element={<InternshipsPage />} />
         <Route path="/mentorship" element={<MentorshipPage />} />
-        <Route path="/mentees" element={<MentorDashboard />} />
-        <Route path="/students" element={<div>Students Search Page</div>} />
+        <Route path="/messages" element={<MessagesPage />} />
+        <Route path="/mentees" element={<MenteesPage />} />
+        <Route path="/students" element={<StudentsPage />} />
         <Route path="/post-internship" element={<StartupDashboard />} />
         <Route path="/applications" element={<StartupDashboard />} />
-        <Route path="/talent" element={<div>Talent Search Page</div>} />
+        <Route path="/talent" element={<TalentPage />} />
         <Route path="/club" element={<ClubLeaderDashboard />} />
         <Route path="/members" element={<ClubLeaderDashboard />} />
         <Route path="/events" element={<ClubLeaderDashboard />} />
         <Route path="/clubs" element={<ClubsPage />} />
-        <Route path="/users" element={<AdminDashboard />} />
+        <Route path="/users" element={<AdminUsersPage />} />
+        <Route path="/admin-clubs" element={<AdminClubsPage />} />
         <Route path="/analytics" element={<AdminDashboard />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
