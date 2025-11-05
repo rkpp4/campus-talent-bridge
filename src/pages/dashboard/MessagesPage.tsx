@@ -172,6 +172,20 @@ export default function MessagesPage() {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', selectedConversation);
 
+      // Create notification for recipient
+      const conversation = conversations.find(c => c.id === selectedConversation);
+      if (conversation) {
+        const recipientId = conversation.mentor_id === profile.id 
+          ? conversation.student_id 
+          : conversation.mentor_id;
+        
+        await supabase.from('notifications').insert({
+          user_id: recipientId,
+          title: 'New Message',
+          message: `${profile.full_name} sent you a message: "${newMessage.trim().substring(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
+        });
+      }
+
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);

@@ -29,6 +29,7 @@ import {
   AdminClubsPage,
   AdminUsersPage,
   StudentProfilePage,
+  MentorProfilePage,
 } from "./pages/dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -78,6 +79,7 @@ function DashboardRouter() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/student/:id" element={<StudentProfilePage />} />
+        <Route path="/mentor/:id" element={<MentorProfilePage />} />
       </Routes>
     </DashboardLayout>
   );

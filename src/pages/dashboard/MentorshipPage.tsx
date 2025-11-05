@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../contexts/AuthContext";
 import { Search, Users, Send } from "lucide-react";
 
 export function MentorshipPage() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [mentors, setMentors] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -146,12 +148,20 @@ export function MentorshipPage() {
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={() => setSelectedMentor(mentor)}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    Request Mentorship
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigate(`/dashboard/mentor/${mentor.id}`)}
+                      className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      onClick={() => setSelectedMentor(mentor)}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Request
+                    </button>
+                  </div>
                 </div>
               ))
             )}

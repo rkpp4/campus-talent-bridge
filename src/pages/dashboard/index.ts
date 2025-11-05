@@ -17,3 +17,4 @@ export { default as TalentPage } from "./TalentPage";
 export { default as AdminClubsPage } from "./AdminClubsPage";
 export { default as AdminUsersPage } from "./AdminUsersPage";
 export { default as StudentProfilePage } from "./StudentProfilePage";
+export { MentorProfilePage } from "./MentorProfilePage";
