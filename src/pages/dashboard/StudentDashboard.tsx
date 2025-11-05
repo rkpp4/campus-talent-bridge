@@ -229,6 +229,12 @@ export function StudentDashboard() {
               + Create Project
             </Link>
             <Link
+              to="/dashboard/mentorship"
+              className="block text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
+            >
+              + Find Mentors
+            </Link>
+            <Link
               to="/dashboard/internships"
               className="block text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
             >

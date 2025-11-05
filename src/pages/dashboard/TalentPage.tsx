@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ interface Talent {
 }
 
 export default function TalentPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [talents, setTalents] = useState<Talent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -207,7 +209,11 @@ export default function TalentPage() {
                   <Mail className="w-4 h-4 mr-2" />
                   Invite
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate(`/dashboard/student/${talent.id}`)}
+                >
                   <ExternalLink className="w-4 h-4" />
                 </Button>
               </div>

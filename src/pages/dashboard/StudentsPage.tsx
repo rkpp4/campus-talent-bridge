@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ interface Student {
 }
 
 export default function StudentsPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -178,9 +180,14 @@ export default function StudentsPage() {
                     <Linkedin className="w-4 h-4" />
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="ml-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="ml-auto"
+                  onClick={() => navigate(`/dashboard/student/${student.id}`)}
+                >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  View Profile
+                  View Full Profile
                 </Button>
               </div>
             </Card>
