@@ -16,16 +16,37 @@ export function MentorshipPage() {
   }, [profile?.id]);
 
   const fetchData = async () => {
+    if (!profile?.id) return;
+    
     const [mentorsRes, requestsRes] = await Promise.all([
       supabase
-        .from("mentor_profiles")
-        .select("*, profiles(id, full_name, avatar_url)"),
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("role", "mentor"),
       supabase
         .from("mentorship_requests")
         .select("*, profiles!mentorship_requests_mentor_id_fkey(full_name)")
-        .eq("student_id", profile?.id || ""),
+        .eq("student_id", profile.id),
     ]);
-    setMentors(mentorsRes.data || []);
+    
+    // Fetch mentor profiles for each mentor
+    const mentorIds = mentorsRes.data?.map(m => m.id) || [];
+    const { data: mentorProfiles } = await supabase
+      .from("mentor_profiles")
+      .select("*")
+      .in("id", mentorIds);
+    
+    // Combine mentor data with profiles
+    const mentorsWithProfiles = (mentorsRes.data || []).map(mentor => {
+      const profile = mentorProfiles?.find(mp => mp.id === mentor.id);
+      return {
+        ...profile,
+        profiles: mentor,
+        id: mentor.id
+      };
+    });
+    
+    setMentors(mentorsWithProfiles);
     setRequests(requestsRes.data || []);
   };
 
@@ -71,47 +92,69 @@ export function MentorshipPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {filtered.map((mentor) => (
-              <div
-                key={mentor.id}
-                className="bg-white p-6 rounded-lg shadow-sm border"
-              >
-                <div className="flex items-start space-x-4 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-blue-600 font-semibold">
-                      {mentor.profiles?.full_name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {mentor.profiles?.full_name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {mentor.years_of_experience} years experience
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 mb-3">{mentor.bio}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {mentor.expertise
-                    ?.slice(0, 3)
-                    .map((exp: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                      >
-                        {exp}
-                      </span>
-                    ))}
-                </div>
-                <button
-                  onClick={() => setSelectedMentor(mentor)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Request Mentorship
-                </button>
+            {filtered.length === 0 ? (
+              <div className="col-span-2 text-center py-12 bg-white rounded-lg border">
+                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Mentors Found
+                </h3>
+                <p className="text-gray-600">
+                  {searchTerm
+                    ? "Try adjusting your search terms"
+                    : "No mentors are currently available. Check back later!"}
+                </p>
               </div>
-            ))}
+            ) : (
+              filtered.map((mentor) => (
+                <div
+                  key={mentor.id}
+                  className="bg-white p-6 rounded-lg shadow-sm border"
+                >
+                  <div className="flex items-start space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 font-semibold">
+                        {mentor.profiles?.full_name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        {mentor.profiles?.full_name}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {mentor.years_of_experience || 0} years experience
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    {mentor.bio || "No bio available"}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {mentor.expertise && mentor.expertise.length > 0 ? (
+                      mentor.expertise
+                        ?.slice(0, 3)
+                        .map((exp: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                          >
+                            {exp}
+                          </span>
+                        ))
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        No expertise listed
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setSelectedMentor(mentor)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Request Mentorship
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

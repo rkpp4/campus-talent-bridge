@@ -18,10 +18,19 @@ export function LoginPage() {
     setLoading(true);
 
     try {
+      // Validate admin credentials if admin login
+      if (isAdminLogin) {
+        if (email !== "admin@gmail.com" || password !== "123456789") {
+          setError("Invalid admin credentials");
+          setLoading(false);
+          return;
+        }
+      }
+      
       await signIn(email, password);
       navigate("/dashboard");
-    } catch (err) {
-      setError("Invalid email or password");
+    } catch (err: any) {
+      setError(err?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
