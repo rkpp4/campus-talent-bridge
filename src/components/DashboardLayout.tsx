@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'club_leader':
         return [
           ...common.slice(0, 1),
-          { icon: Building2, label: 'My Club', path: '/dashboard/club' },
+          { icon: Building2, label: 'My Club', path: '/dashboard/my-club' },
           { icon: Users, label: 'Members', path: '/dashboard/members' },
           { icon: FileText, label: 'Events', path: '/dashboard/events' },
           { icon: Search, label: 'Explore', path: '/dashboard/explore' },

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ClubProvider } from "./contexts/ClubContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { LandingPage } from "./pages/LandingPage";
@@ -30,6 +31,9 @@ import {
   AdminUsersPage,
   StudentProfilePage,
   MentorProfilePage,
+  MyClubPage,
+  ClubMembersPage,
+  ClubEventsPage,
 } from "./pages/dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -85,32 +89,34 @@ function DashboardRouter() {
   };
 
   return (
-    <DashboardLayout>
-      <Routes>
-        <Route path="/" element={getDashboardComponent()} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/internships" element={<InternshipsPage />} />
-        <Route path="/mentorship" element={<MentorshipPage />} />
-        <Route path="/messages" element={<MessagesPage />} />
-        <Route path="/mentees" element={<MenteesPage />} />
-        <Route path="/students" element={<StudentsPage />} />
-        <Route path="/post-internship" element={<StartupDashboard />} />
-        <Route path="/applications" element={<StartupDashboard />} />
-        <Route path="/talent" element={<TalentPage />} />
-        <Route path="/club" element={<ClubLeaderDashboard />} />
-        <Route path="/members" element={<ClubLeaderDashboard />} />
-        <Route path="/events" element={<ClubLeaderDashboard />} />
-        <Route path="/clubs" element={<ClubsPage />} />
-        <Route path="/users" element={<AdminUsersPage />} />
-        <Route path="/admin-clubs" element={<AdminClubsPage />} />
-        <Route path="/analytics" element={<AdminDashboard />} />
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/student/:id" element={<StudentProfilePage />} />
-        <Route path="/mentor/:id" element={<MentorProfilePage />} />
-      </Routes>
-    </DashboardLayout>
+    <ClubProvider>
+      <DashboardLayout>
+        <Routes>
+          <Route path="/" element={getDashboardComponent()} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/internships" element={<InternshipsPage />} />
+          <Route path="/mentorship" element={<MentorshipPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/mentees" element={<MenteesPage />} />
+          <Route path="/students" element={<StudentsPage />} />
+          <Route path="/post-internship" element={<StartupDashboard />} />
+          <Route path="/applications" element={<StartupDashboard />} />
+          <Route path="/talent" element={<TalentPage />} />
+          <Route path="/my-club" element={<MyClubPage />} />
+          <Route path="/members" element={<ClubMembersPage />} />
+          <Route path="/events" element={<ClubEventsPage />} />
+          <Route path="/clubs" element={<ClubsPage />} />
+          <Route path="/users" element={<AdminUsersPage />} />
+          <Route path="/admin-clubs" element={<AdminClubsPage />} />
+          <Route path="/analytics" element={<AdminDashboard />} />
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/student/:id" element={<StudentProfilePage />} />
+          <Route path="/mentor/:id" element={<MentorProfilePage />} />
+        </Routes>
+      </DashboardLayout>
+    </ClubProvider>
   );
 }
 

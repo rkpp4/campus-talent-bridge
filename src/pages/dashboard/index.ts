@@ -18,3 +18,6 @@ export { default as AdminClubsPage } from "./AdminClubsPage";
 export { default as AdminUsersPage } from "./AdminUsersPage";
 export { default as StudentProfilePage } from "./StudentProfilePage";
 export { MentorProfilePage } from "./MentorProfilePage";
+export { default as MyClubPage } from "./MyClubPage";
+export { default as ClubMembersPage } from "./ClubMembersPage";
+export { default as ClubEventsPage } from "./ClubEventsPage";
