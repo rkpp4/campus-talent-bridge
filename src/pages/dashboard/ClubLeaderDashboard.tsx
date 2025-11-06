@@ -8,6 +8,7 @@ export function ClubLeaderDashboard() {
   const [club, setClub] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventData, setEventData] = useState({
     title: "",
@@ -17,31 +18,45 @@ export function ClubLeaderDashboard() {
   });
 
   useEffect(() => {
-    fetchData();
+    if (profile?.id) {
+      fetchData();
+    }
   }, [profile?.id]);
 
   const fetchData = async () => {
-    const { data: clubData } = await supabase
-      .from("clubs")
-      .select("*")
-      .eq("leader_id", profile?.id || "")
-      .maybeSingle();
-    setClub(clubData);
+    if (!profile?.id) return;
+    
+    setLoading(true);
+    try {
+      const { data: clubData, error: clubError } = await supabase
+        .from("clubs")
+        .select("*")
+        .eq("leader_id", profile.id)
+        .maybeSingle();
 
-    if (clubData) {
-      const [membersRes, eventsRes] = await Promise.all([
-        supabase
-          .from("club_members")
-          .select("*, profiles(full_name)")
-          .eq("club_id", clubData.id),
-        supabase
-          .from("club_events")
-          .select("*")
-          .eq("club_id", clubData.id)
-          .order("event_date", { ascending: true }),
-      ]);
-      setMembers(membersRes.data || []);
-      setEvents(eventsRes.data || []);
+      if (clubError) {
+        console.error("Error fetching club:", clubError);
+      }
+      
+      setClub(clubData);
+
+      if (clubData) {
+        const [membersRes, eventsRes] = await Promise.all([
+          supabase
+            .from("club_members")
+            .select("*, profiles(full_name)")
+            .eq("club_id", clubData.id),
+          supabase
+            .from("club_events")
+            .select("*")
+            .eq("club_id", clubData.id)
+            .order("event_date", { ascending: true }),
+        ]);
+        setMembers(membersRes.data || []);
+        setEvents(eventsRes.data || []);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,6 +79,14 @@ export function ClubLeaderDashboard() {
     setEventData({ title: "", description: "", event_date: "", location: "" });
     fetchData();
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!club) {
     return (

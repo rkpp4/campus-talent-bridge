@@ -7,7 +7,10 @@ export function useUnreadNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setUnreadCount(0);
+      return;
+    }
 
     // Initial fetch
     fetchUnreadCount();
@@ -35,15 +38,27 @@ export function useUnreadNotifications() {
   }, [profile?.id]);
 
   const fetchUnreadCount = async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setUnreadCount(0);
+      return;
+    }
 
-    const { count } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', profile.id)
-      .eq('is_read', false);
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profile.id)
+        .eq('is_read', false);
 
-    setUnreadCount(count || 0);
+      if (error) {
+        console.error('Error fetching unread count:', error);
+        return;
+      }
+
+      setUnreadCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
   };
 
   return { unreadCount, refreshCount: fetchUnreadCount };
