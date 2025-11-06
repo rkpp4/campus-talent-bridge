@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
 import {
   Award,
   Home,
@@ -27,6 +28,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { unreadCount } = useUnreadNotifications();
 
   const handleSignOut = async () => {
     await signOut();
@@ -104,12 +106,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Award className="w-8 h-8 text-primary" />
             <span className="font-bold text-xl text-foreground">TalentBridge</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-md hover:bg-muted"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <div className="relative">
+                <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+              </div>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-md hover:bg-muted"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -158,19 +167,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const isNotifications = item.path === '/dashboard/notifications';
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors relative ${
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-foreground hover:bg-muted'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <div className="relative">
+                  <item.icon className="w-5 h-5" />
+                  {isNotifications && unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
+                  )}
+                </div>
                 <span className="text-sm font-medium">{item.label}</span>
+                {isNotifications && unreadCount > 0 && (
+                  <span className="ml-auto bg-destructive text-destructive-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}

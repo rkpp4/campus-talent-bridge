@@ -8,7 +8,10 @@ export function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchNotifications();
+    if (profile?.id) {
+      fetchNotifications();
+      markAllAsRead();
+    }
   }, [profile?.id]);
 
   const fetchNotifications = async () => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Users,
   Briefcase,
@@ -14,6 +15,13 @@ import {
   Plus,
   UserPlus,
 } from "lucide-react";
+
+interface Club {
+  id: string;
+  name: string;
+  description: string | null;
+  leader_id: string | null;
+}
 
 export function AdminDashboard() {
   const { toast } = useToast();
@@ -31,6 +39,7 @@ export function AdminDashboard() {
   const [isCreateClubOpen, setIsCreateClubOpen] = useState(false);
   const [isAssignLeaderOpen, setIsAssignLeaderOpen] = useState(false);
   const [newClub, setNewClub] = useState({ name: "", description: "" });
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [leaderData, setLeaderData] = useState({
     fullName: "",
     email: "",
@@ -40,7 +49,19 @@ export function AdminDashboard() {
 
   useEffect(() => {
     fetchStats();
+    fetchClubs();
   }, []);
+
+  const fetchClubs = async () => {
+    const { data, error } = await supabase
+      .from("clubs")
+      .select("id, name, description, leader_id")
+      .order("name");
+
+    if (!error && data) {
+      setClubs(data);
+    }
+  };
 
   const fetchStats = async () => {
     const [
@@ -113,6 +134,7 @@ export function AdminDashboard() {
       setNewClub({ name: "", description: "" });
       setIsCreateClubOpen(false);
       fetchStats();
+      fetchClubs();
     }
   };
 
@@ -145,14 +167,17 @@ export function AdminDashboard() {
 
       if (clubError) throw clubError;
 
+      const clubName = clubs.find(c => c.id === leaderData.clubId)?.name || "Club";
+
       toast({
         title: "Success",
-        description: `Club leader created. Email: ${leaderData.email}, Password: ${leaderData.password}`,
+        description: `✅ Club Leader assigned successfully to ${clubName}`,
       });
       
       setLeaderData({ fullName: "", email: "", password: "", clubId: "" });
       setIsAssignLeaderOpen(false);
       fetchStats();
+      fetchClubs();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -240,12 +265,22 @@ export function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Club ID</label>
-                  <Input
+                  <label className="text-sm font-medium">Select Club</label>
+                  <Select
                     value={leaderData.clubId}
-                    onChange={(e) => setLeaderData({ ...leaderData, clubId: e.target.value })}
-                    placeholder="Enter club ID from clubs page"
-                  />
+                    onValueChange={(value) => setLeaderData({ ...leaderData, clubId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a club" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clubs.map((club) => (
+                        <SelectItem key={club.id} value={club.id}>
+                          {club.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={handleAssignLeader} className="w-full">
                   Create Leader Account
