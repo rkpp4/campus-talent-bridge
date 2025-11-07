@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
@@ -52,7 +52,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     if (!profile?.id) {
       setLoading(false);
       return;
@@ -99,11 +99,11 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.id]);
 
   useEffect(() => {
     refreshData();
-  }, [profile?.id]);
+  }, [refreshData]);
 
   return (
     <ClubContext.Provider value={{ club, members, events, loading, refreshData }}>
