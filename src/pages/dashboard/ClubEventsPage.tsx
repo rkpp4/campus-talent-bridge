@@ -69,8 +69,8 @@ export default function ClubEventsPage() {
     return (
       <div className="text-center py-12">
         <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-foreground mb-2">No Club Assigned</h2>
-        <p className="text-muted-foreground">Contact admin to get assigned to a club.</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">No Club Created</h2>
+        <p className="text-muted-foreground">Create your club from the dashboard to manage events.</p>
       </div>
     );
   }
@@ -124,6 +124,9 @@ export default function ClubEventsPage() {
                   value={eventData.event_date}
                   onChange={(e) => setEventData({ ...eventData, event_date: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can add past or future events
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium">Location</label>

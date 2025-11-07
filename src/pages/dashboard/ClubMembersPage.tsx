@@ -88,8 +88,8 @@ export default function ClubMembersPage() {
     return (
       <div className="text-center py-12">
         <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-foreground mb-2">No Club Assigned</h2>
-        <p className="text-muted-foreground">Contact admin to get assigned to a club.</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">No Club Created</h2>
+        <p className="text-muted-foreground">Create your club from the dashboard to manage members.</p>
       </div>
     );
   }
