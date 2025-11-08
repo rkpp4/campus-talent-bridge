@@ -58,19 +58,29 @@ export default function AdminClubsPage() {
 
   const fetchClubLeaders = async () => {
     try {
-      const { data, error } = await supabase
+      // First get all club leader user IDs
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('user_id, profiles!inner(id, full_name)')
+        .select('user_id')
         .eq('role', 'club_leader');
 
-      if (error) throw error;
-      
-      const leaders = (data || []).map((item: any) => ({
-        id: item.user_id,
-        full_name: item.profiles.full_name
-      }));
-      
-      setClubLeaders(leaders);
+      if (rolesError) throw rolesError;
+
+      if (!userRoles || userRoles.length === 0) {
+        setClubLeaders([]);
+        return;
+      }
+
+      // Then fetch profiles for those user IDs
+      const userIds = userRoles.map(ur => ur.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      setClubLeaders(profiles || []);
     } catch (error) {
       console.error('Error fetching club leaders:', error);
       toast({
