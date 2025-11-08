@@ -200,31 +200,55 @@ export type Database = {
       }
       clubs: {
         Row: {
+          category: string | null
+          contact_email: string | null
           created_at: string | null
           description: string | null
           id: string
+          instagram_url: string | null
           is_approved: boolean | null
           leader_id: string | null
+          linkedin_url: string | null
+          logo_url: string | null
+          meeting_schedule: string | null
           name: string
+          twitter_url: string | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
+          category?: string | null
+          contact_email?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          instagram_url?: string | null
           is_approved?: boolean | null
           leader_id?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          meeting_schedule?: string | null
           name: string
+          twitter_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
+          category?: string | null
+          contact_email?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          instagram_url?: string | null
           is_approved?: boolean | null
           leader_id?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          meeting_schedule?: string | null
           name?: string
+          twitter_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {

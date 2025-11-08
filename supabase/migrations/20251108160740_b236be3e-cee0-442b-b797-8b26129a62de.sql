@@ -1,0 +1,9 @@
+-- Add additional fields to clubs table for rich profiles
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS website_url TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS instagram_url TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS twitter_url TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS linkedin_url TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS meeting_schedule TEXT;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS contact_email TEXT;

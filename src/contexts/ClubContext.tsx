@@ -10,6 +10,14 @@ interface Club {
   is_approved: boolean;
   created_at: string;
   updated_at: string;
+  logo_url?: string;
+  website_url?: string;
+  instagram_url?: string;
+  twitter_url?: string;
+  linkedin_url?: string;
+  category?: string;
+  meeting_schedule?: string;
+  contact_email?: string;
 }
 
 interface Member {
@@ -41,6 +49,7 @@ interface ClubContextType {
   events: Event[];
   loading: boolean;
   refreshData: () => Promise<void>;
+  refreshClub: () => Promise<void>;
 }
 
 const ClubContext = createContext<ClubContextType | undefined>(undefined);
@@ -106,7 +115,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
   }, [refreshData]);
 
   return (
-    <ClubContext.Provider value={{ club, members, events, loading, refreshData }}>
+    <ClubContext.Provider value={{ club, members, events, loading, refreshData, refreshClub: refreshData }}>
       {children}
     </ClubContext.Provider>
   );

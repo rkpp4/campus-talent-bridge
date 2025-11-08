@@ -34,6 +34,7 @@ import {
   MyClubPage,
   ClubMembersPage,
   ClubEventsPage,
+  EditClubProfilePage,
 } from "./pages/dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -103,6 +104,7 @@ function DashboardRouter() {
           <Route path="/applications" element={<StartupDashboard />} />
           <Route path="/talent" element={<TalentPage />} />
           <Route path="/my-club" element={<MyClubPage />} />
+          <Route path="/edit-club-profile" element={<EditClubProfilePage />} />
           <Route path="/members" element={<ClubMembersPage />} />
           <Route path="/events" element={<ClubEventsPage />} />
           <Route path="/clubs" element={<ClubsPage />} />
