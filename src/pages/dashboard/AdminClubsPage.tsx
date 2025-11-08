@@ -59,14 +59,25 @@ export default function AdminClubsPage() {
   const fetchClubLeaders = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email:id')
+        .from('user_roles')
+        .select('user_id, profiles!inner(id, full_name)')
         .eq('role', 'club_leader');
 
       if (error) throw error;
-      setClubLeaders(data || []);
+      
+      const leaders = (data || []).map((item: any) => ({
+        id: item.user_id,
+        full_name: item.profiles.full_name
+      }));
+      
+      setClubLeaders(leaders);
     } catch (error) {
       console.error('Error fetching club leaders:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load club leaders',
+        variant: 'destructive',
+      });
     }
   };
 
