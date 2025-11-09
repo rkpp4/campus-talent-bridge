@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../contexts/AuthContext";
-import { Save, User } from "lucide-react";
+import { Save, User, Upload } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProfilePage() {
   const { profile, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [profileData, setProfileData] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchProfileData();
@@ -37,6 +42,80 @@ export function ProfilePage() {
         .eq("id", profile.id)
         .maybeSingle();
       setProfileData(data || {});
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').slice(-2).join('/');
+        await supabase.storage.from('avatars').remove([oldPath]);
+      }
+
+      // Upload new avatar
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+      
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -88,16 +167,47 @@ export function ProfilePage() {
 
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <div className="mb-6">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-10 h-10 text-blue-600" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {profile?.full_name}
-            </h2>
-            <p className="text-gray-600 capitalize">
-              {profile?.role?.replace("_", " ")}
-            </p>
+          <div className="flex flex-col items-center">
+            <Avatar className="w-24 h-24 mb-4">
+              <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+              <AvatarFallback>
+                <User className="w-12 h-12" />
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="mb-4">
+              <input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                disabled={uploading}
+              />
+              <label htmlFor="avatar-upload">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  asChild
+                >
+                  <span className="cursor-pointer">
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? "Uploading..." : "Change Photo"}
+                  </span>
+                </Button>
+              </label>
+            </div>
+
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {profile?.full_name}
+              </h2>
+              <p className="text-gray-600 capitalize">
+                {profile?.role?.replace("_", " ")}
+              </p>
+            </div>
           </div>
         </div>
 
