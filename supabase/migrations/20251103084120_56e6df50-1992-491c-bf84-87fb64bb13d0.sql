@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS public.internships (
 
 ALTER TABLE public.internships ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Internships viewable by all" ON public.internships FOR SELECT USING (true);
+CREATE POLICY "Internships viewable by all authenticated users" ON public.internships FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Startups can create internships" ON public.internships FOR INSERT WITH CHECK (auth.uid() = startup_id);
 CREATE POLICY "Startups can update own internships" ON public.internships FOR UPDATE USING (auth.uid() = startup_id);
 CREATE POLICY "Startups can delete own internships" ON public.internships FOR DELETE USING (auth.uid() = startup_id);
