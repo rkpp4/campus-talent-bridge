@@ -31,80 +31,88 @@ export function StudentDashboard() {
     const fetchData = async () => {
       if (!profile?.id) return;
 
-      const [
-        projectsRes,
-        applicationsRes,
-        mentorshipsRes,
-        clubsRes,
-        recentProjectsRes,
-        internshipsRes,
-      ] = await Promise.all([
-        supabase
-          .from("micro_projects")
-          .select("id", { count: "exact", head: true })
-          .eq("student_id", profile.id),
-        supabase
-          .from("internship_applications")
-          .select("id", { count: "exact", head: true })
-          .eq("student_id", profile.id),
-        supabase
+      try {
+        const [
+          projectsRes,
+          applicationsRes,
+          mentorshipsRes,
+          clubsRes,
+          recentProjectsRes,
+          internshipsRes,
+        ] = await Promise.all([
+          supabase
+            .from("micro_projects")
+            .select("id", { count: "exact", head: true })
+            .eq("student_id", profile.id),
+          supabase
+            .from("internship_applications")
+            .select("id", { count: "exact", head: true })
+            .eq("student_id", profile.id),
+          supabase
+            .from("mentorship_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("student_id", profile.id),
+          supabase
+            .from("club_members")
+            .select("id", { count: "exact", head: true })
+            .eq("student_id", profile.id)
+            .eq("status", "approved"),
+          supabase
+            .from("micro_projects")
+            .select("*")
+            .eq("student_id", profile.id)
+            .order("created_at", { ascending: false })
+            .limit(3),
+          supabase
+            .from("internships")
+            .select("*")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .limit(3),
+        ]);
+
+        if (internshipsRes.error) {
+          console.error("Error fetching internships:", internshipsRes.error);
+        }
+
+        setStats({
+          projects: projectsRes.count || 0,
+          applications: applicationsRes.count || 0,
+          mentorships: mentorshipsRes.count || 0,
+          clubs: clubsRes.count || 0,
+        });
+
+        setRecentProjects(recentProjectsRes.data || []);
+        setRecentInternships(internshipsRes.data || []);
+
+        const { data: mentorshipData } = await supabase
           .from("mentorship_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("student_id", profile.id),
-        supabase
-          .from("club_members")
-          .select("id", { count: "exact", head: true })
-          .eq("student_id", profile.id)
-          .eq("status", "approved"),
-        supabase
-          .from("micro_projects")
-          .select("*")
-          .eq("student_id", profile.id)
-          .order("created_at", { ascending: false })
-          .limit(3),
-        supabase
-          .from("internships")
-          .select("*")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(3),
-      ]);
+          .select("status")
+          .eq("student_id", profile.id);
+        setMentorshipStatus(mentorshipData || []);
 
-      setStats({
-        projects: projectsRes.count || 0,
-        applications: applicationsRes.count || 0,
-        mentorships: mentorshipsRes.count || 0,
-        clubs: clubsRes.count || 0,
-      });
-
-      setRecentProjects(recentProjectsRes.data || []);
-      setRecentInternships(internshipsRes.data || []);
-
-      const { data: mentorshipData } = await supabase
-        .from("mentorship_requests")
-        .select("status")
-        .eq("student_id", profile.id);
-      setMentorshipStatus(mentorshipData || []);
-
-      const activities = [
-        ...(recentProjectsRes.data?.map((p: any) => ({
-          type: "project",
-          ...p,
-        })) || []),
-        ...(applicationsRes.data?.map((a: any) => ({
-          type: "application",
-          ...a,
-        })) || []),
-      ]
-        .sort(
-          (a, b) =>
-            new Date(b.created_at || b.applied_at).getTime() -
-            new Date(a.created_at || a.applied_at).getTime()
-        )
-        .slice(0, 5);
-      setRecentActivity(activities);
-
-      setLoading(false);
+        const activities = [
+          ...(recentProjectsRes.data?.map((p: any) => ({
+            type: "project",
+            ...p,
+          })) || []),
+          ...(applicationsRes.data?.map((a: any) => ({
+            type: "application",
+            ...a,
+          })) || []),
+        ]
+          .sort(
+            (a, b) =>
+              new Date(b.created_at || b.applied_at).getTime() -
+              new Date(a.created_at || a.applied_at).getTime()
+          )
+          .slice(0, 5);
+        setRecentActivity(activities);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
