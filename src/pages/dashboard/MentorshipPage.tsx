@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { mentorshipRequestSchema } from "@/lib/validations";
 import { Search, Users, Send } from "lucide-react";
 
 export function MentorshipPage() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [mentors, setMentors] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,15 +58,41 @@ export function MentorshipPage() {
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMentor || !profile?.id) return;
-    await supabase.from("mentorship_requests").insert({
-      student_id: profile.id,
-      mentor_id: selectedMentor.id,
-      topic: formData.topic,
-      message: formData.message,
-    });
-    setSelectedMentor(null);
-    setFormData({ topic: "", message: "" });
-    fetchData();
+
+    try {
+      const validatedData = mentorshipRequestSchema.parse(formData);
+
+      const { error } = await supabase.from("mentorship_requests").insert({
+        student_id: profile.id,
+        mentor_id: selectedMentor.id,
+        topic: validatedData.topic,
+        message: validatedData.message,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Mentorship request sent successfully",
+      });
+      setSelectedMentor(null);
+      setFormData({ topic: "", message: "" });
+      fetchData();
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to send request",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const filtered = mentors.filter(
