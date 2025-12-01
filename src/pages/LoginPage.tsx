@@ -8,7 +8,6 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -18,15 +17,6 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      // Validate admin credentials if admin login
-      if (isAdminLogin) {
-        if (email !== "admin@gmail.com" || password !== "123456789") {
-          setError("Invalid admin credentials");
-          setLoading(false);
-          return;
-        }
-      }
-      
       await signIn(email, password);
       navigate("/dashboard");
     } catch (err: any) {
@@ -43,27 +33,14 @@ export function LoginPage() {
           <Award className="w-12 h-12 text-blue-600" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          {isAdminLogin ? "Admin Login" : "Sign in to TalentBridge"}
+          Sign in to TalentBridge
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {!isAdminLogin && (
-            <>
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-blue-600 hover:text-blue-700">
-                Sign up
-              </Link>
-            </>
-          )}
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-blue-600 hover:text-blue-700">
+            Sign up
+          </Link>
         </p>
-        <div className="mt-2 text-center">
-          <button
-            type="button"
-            onClick={() => setIsAdminLogin(!isAdminLogin)}
-            className="text-sm text-blue-600 hover:text-blue-700 underline"
-          >
-            {isAdminLogin ? "← Back to regular login" : "Admin Login →"}
-          </button>
-        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

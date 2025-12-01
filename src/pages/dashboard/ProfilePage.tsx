@@ -5,6 +5,11 @@ import { Save, User, Upload } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import {
+  studentProfileSchema,
+  mentorProfileSchema,
+  startupProfileSchema,
+} from "@/lib/validations";
 
 export function ProfilePage() {
   const { profile, refreshProfile } = useAuth();
@@ -126,34 +131,60 @@ export function ProfilePage() {
 
     try {
       if (profile?.role === "student") {
-        await supabase.from("student_profiles").upsert({
-          id: profile.id,
+        const dataToValidate = {
           ...profileData,
           skills:
             typeof profileData.skills === "string"
-              ? profileData.skills.split(",").map((s: string) => s.trim())
-              : profileData.skills,
+              ? profileData.skills
+              : profileData.skills?.join(", ") || "",
+        };
+        const validatedData = studentProfileSchema.parse(dataToValidate);
+
+        await supabase.from("student_profiles").upsert({
+          id: profile.id,
+          ...validatedData,
+          skills: validatedData.skills
+            ? validatedData.skills.split(",").map((s: string) => s.trim())
+            : [],
         });
       } else if (profile?.role === "mentor") {
-        await supabase.from("mentor_profiles").upsert({
-          id: profile.id,
+        const dataToValidate = {
           ...profileData,
           expertise:
             typeof profileData.expertise === "string"
-              ? profileData.expertise.split(",").map((s: string) => s.trim())
-              : profileData.expertise,
+              ? profileData.expertise
+              : profileData.expertise?.join(", ") || "",
+        };
+        const validatedData = mentorProfileSchema.parse(dataToValidate);
+
+        await supabase.from("mentor_profiles").upsert({
+          id: profile.id,
+          ...validatedData,
+          expertise: validatedData.expertise
+            ? validatedData.expertise.split(",").map((s: string) => s.trim())
+            : [],
         });
       } else if (profile?.role === "startup") {
+        const validatedData = startupProfileSchema.parse(profileData);
+        
+        const { company_name, description, location, website_url } = validatedData;
         await supabase.from("startup_profiles").upsert({
           id: profile.id,
-          ...profileData,
+          company_name,
+          description,
+          location,
+          website_url,
         });
       }
 
       await refreshProfile();
       setMessage("Profile updated successfully!");
-    } catch (error) {
-      setMessage("Error updating profile");
+    } catch (error: any) {
+      if (error.errors) {
+        setMessage(error.errors[0]?.message || "Validation error");
+      } else {
+        setMessage("Error updating profile");
+      }
     } finally {
       setLoading(false);
     }

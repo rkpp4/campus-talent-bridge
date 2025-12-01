@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { clubSchema, clubLeaderSchema } from "@/lib/validations";
 import {
   Users,
   Briefcase,
@@ -116,42 +117,46 @@ export function AdminDashboard() {
   };
 
   const handleCreateClub = async () => {
-    if (!newClub.name.trim()) {
-      toast({ title: "Error", description: "Club name is required", variant: "destructive" });
-      return;
-    }
+    try {
+      const validatedData = clubSchema.parse(newClub);
 
-    const { error } = await supabase.from("clubs").insert({
-      name: newClub.name,
-      description: newClub.description,
-      is_approved: true,
-    });
+      const { error } = await supabase.from("clubs").insert({
+        name: validatedData.name,
+        description: validatedData.description,
+        is_approved: true,
+      });
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to create club", variant: "destructive" });
-    } else {
+      if (error) throw error;
+
       toast({ title: "Success", description: "Club created successfully" });
       setNewClub({ name: "", description: "" });
       setIsCreateClubOpen(false);
       fetchStats();
       fetchClubs();
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Error", description: "Failed to create club", variant: "destructive" });
+      }
     }
   };
 
   const handleAssignLeader = async () => {
-    if (!leaderData.fullName || !leaderData.email || !leaderData.password || !leaderData.clubId) {
-      toast({ title: "Error", description: "All fields are required", variant: "destructive" });
-      return;
-    }
-
     try {
+      const validatedData = clubLeaderSchema.parse(leaderData);
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: leaderData.email,
-        password: leaderData.password,
+        email: validatedData.email,
+        password: validatedData.password,
         options: {
           data: {
-            full_name: leaderData.fullName,
+            full_name: validatedData.fullName,
             role: "club_leader",
           },
         },
@@ -163,11 +168,11 @@ export function AdminDashboard() {
       const { error: clubError } = await supabase
         .from("clubs")
         .update({ leader_id: authData.user?.id })
-        .eq("id", leaderData.clubId);
+        .eq("id", validatedData.clubId);
 
       if (clubError) throw clubError;
 
-      const clubName = clubs.find(c => c.id === leaderData.clubId)?.name || "Club";
+      const clubName = clubs.find(c => c.id === validatedData.clubId)?.name || "Club";
 
       toast({
         title: "Success",
@@ -179,7 +184,15 @@ export function AdminDashboard() {
       fetchStats();
       fetchClubs();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
     }
   };
 
