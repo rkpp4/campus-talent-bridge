@@ -25,7 +25,7 @@ export function ExplorePage() {
         supabase.from("mentor_profiles").select("*, profiles(id, full_name)"),
         supabase
           .from("internships")
-          .select("*, startup_profiles(company_name)")
+          .select("*, profiles(full_name)")
           .eq("is_active", true),
         supabase.from("micro_projects").select("*, profiles(full_name)"),
         supabase
@@ -199,7 +199,7 @@ export function ExplorePage() {
                     {internship.title}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {internship.startup_profiles?.company_name}
+                    {internship.profiles?.full_name}
                   </p>
                 </div>
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded">

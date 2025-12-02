@@ -65,7 +65,7 @@ export function StudentDashboard() {
             .limit(3),
           supabase
             .from("internships")
-            .select("*")
+            .select("*, profiles(full_name)")
             .eq("is_active", true)
             .order("created_at", { ascending: false })
             .limit(3),
