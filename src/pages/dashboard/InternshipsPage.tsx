@@ -17,20 +17,36 @@ export function InternshipsPage() {
   }, [profile?.id]);
 
   const fetchData = async () => {
-    const [internshipsRes, applicationsRes] = await Promise.all([
-      supabase
+    try {
+      console.log("Fetching internships...");
+      const internshipsRes = await supabase
         .from("internships")
         .select("*, startup_profiles(company_name)")
         .eq("is_active", true)
-        .order("created_at", { ascending: false }),
-      supabase
+        .order("created_at", { ascending: false });
+
+      console.log("Internships response:", internshipsRes);
+
+      if (internshipsRes.error) {
+        console.error("Error fetching internships:", internshipsRes.error);
+      }
+
+      const applicationsRes = await supabase
         .from("internship_applications")
         .select("internship_id, status")
-        .eq("student_id", profile?.id || ""),
-    ]);
-    setInternships(internshipsRes.data || []);
-    setApplications(applicationsRes.data || []);
-    setLoading(false);
+        .eq("student_id", profile?.id || "");
+
+      if (applicationsRes.error) {
+        console.error("Error fetching applications:", applicationsRes.error);
+      }
+
+      setInternships(internshipsRes.data || []);
+      setApplications(applicationsRes.data || []);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleApply = async () => {
