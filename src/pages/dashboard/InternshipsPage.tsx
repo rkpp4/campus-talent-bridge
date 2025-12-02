@@ -21,7 +21,7 @@ export function InternshipsPage() {
       console.log("Fetching internships...");
       const internshipsRes = await supabase
         .from("internships")
-        .select("*, startup_profiles(company_name)")
+        .select("*, profiles(full_name)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -104,7 +104,7 @@ export function InternshipsPage() {
                     {internship.title}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {internship.startup_profiles?.company_name}
+                    {internship.profiles?.full_name}
                   </p>
                 </div>
                 {applied ? (
