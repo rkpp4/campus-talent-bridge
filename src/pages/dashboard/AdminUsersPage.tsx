@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Users } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 
 interface User {
   id: string;
@@ -57,6 +59,11 @@ export default function AdminUsersPage() {
     const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
+  });
+
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({
+    items: filteredUsers,
+    itemsPerPage: 10,
   });
 
   const getRoleBadgeVariant = (role: string) => {
@@ -126,28 +133,36 @@ export default function AdminUsersPage() {
             </p>
           </Card>
         ) : (
-          filteredUsers.map((user) => (
-            <Card key={user.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-semibold">
-                      {user.full_name.charAt(0).toUpperCase()}
-                    </span>
+          <>
+            {paginatedItems.map((user) => (
+              <Card key={user.id} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-primary font-semibold">
+                        {user.full_name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.full_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Joined {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{user.full_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Joined {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
+                  <Badge variant={getRoleBadgeVariant(user.role)}>
+                    {user.role.replace('_', ' ')}
+                  </Badge>
                 </div>
-                <Badge variant={getRoleBadgeVariant(user.role)}>
-                  {user.role.replace('_', ' ')}
-                </Badge>
-              </div>
-            </Card>
-          ))
+              </Card>
+            ))}
+            
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={goToPage}
+            />
+          </>
         )}
       </div>
     </div>
