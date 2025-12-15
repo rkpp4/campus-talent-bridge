@@ -150,7 +150,16 @@ export function AdminDashboard() {
     try {
       const validatedData = clubLeaderSchema.parse(leaderData);
 
-      // Create auth user
+      // Save current admin session before creating new user
+      const { data: currentSession } = await supabase.auth.getSession();
+      const adminSession = currentSession?.session;
+
+      if (!adminSession) {
+        toast({ title: "Error", description: "Admin session not found. Please log in again.", variant: "destructive" });
+        return;
+      }
+
+      // Create auth user for club leader
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
@@ -164,7 +173,23 @@ export function AdminDashboard() {
 
       if (authError) throw authError;
 
-      // Update club with leader_id
+      // Immediately restore admin session
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: adminSession.access_token,
+        refresh_token: adminSession.refresh_token,
+      });
+
+      if (sessionError) {
+        console.error("Failed to restore admin session:", sessionError);
+        toast({ 
+          title: "Warning", 
+          description: "Club leader created but session was lost. Please log in again.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Now update club with leader_id (as admin)
       const { error: clubError } = await supabase
         .from("clubs")
         .update({ leader_id: authData.user?.id })
@@ -176,7 +201,7 @@ export function AdminDashboard() {
 
       toast({
         title: "Success",
-        description: `✅ Club Leader assigned successfully to ${clubName}`,
+        description: `Club leader "${validatedData.fullName}" assigned to ${clubName}`,
       });
       
       setLeaderData({ fullName: "", email: "", password: "", clubId: "" });
@@ -184,6 +209,7 @@ export function AdminDashboard() {
       fetchStats();
       fetchClubs();
     } catch (error: any) {
+      console.error("Error assigning leader:", error);
       if (error.errors) {
         toast({
           title: "Validation Error",
