@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/select';
 import { Search, Mail, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 
 interface Talent {
   id: string;
@@ -109,6 +111,11 @@ export default function TalentPage() {
     return (nameMatch || skillsMatch) && skillFilterMatch;
   });
 
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({
+    items: filteredTalents,
+    itemsPerPage: 9,
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -159,67 +166,75 @@ export default function TalentPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTalents.map((talent) => (
-            <Card key={talent.id} className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-semibold text-lg">
-                    {talent.full_name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-semibold">{talent.full_name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {talent.projects_count} projects
-                  </p>
-                </div>
-              </div>
-
-              {talent.student_profile?.bio && (
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                  {talent.student_profile.bio}
-                </p>
-              )}
-
-              {talent.student_profile?.skills && talent.student_profile.skills.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-1">
-                    {talent.student_profile.skills.slice(0, 5).map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {talent.student_profile.skills.length > 5 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{talent.student_profile.skills.length - 5}
-                      </Badge>
-                    )}
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {paginatedItems.map((talent) => (
+              <Card key={talent.id} className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-semibold text-lg">
+                      {talent.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{talent.full_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {talent.projects_count} projects
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => inviteToApply(talent)}
-                  className="flex-1"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Invite
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate(`/dashboard/student/${talent.id}`)}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                {talent.student_profile?.bio && (
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                    {talent.student_profile.bio}
+                  </p>
+                )}
+
+                {talent.student_profile?.skills && talent.student_profile.skills.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {talent.student_profile.skills.slice(0, 5).map((skill, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {talent.student_profile.skills.length > 5 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{talent.student_profile.skills.length - 5}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => inviteToApply(talent)}
+                    className="flex-1"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Invite
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/dashboard/student/${talent.id}`)}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
+        </>
       )}
     </div>
   );

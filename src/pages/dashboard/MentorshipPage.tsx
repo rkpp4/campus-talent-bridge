@@ -5,6 +5,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { mentorshipRequestSchema } from "@/lib/validations";
 import { Search, Users, Send } from "lucide-react";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/PaginationControls";
 
 export function MentorshipPage() {
   const { profile } = useAuth();
@@ -103,6 +105,11 @@ export function MentorshipPage() {
       )
   );
 
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({
+    items: filtered,
+    itemsPerPage: 6,
+  });
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Mentorship</h1>
@@ -136,7 +143,7 @@ export function MentorshipPage() {
                 </p>
               </div>
             ) : (
-              filtered.map((mentor) => (
+              paginatedItems.map((mentor) => (
                 <div
                   key={mentor.id}
                   className="bg-white p-6 rounded-lg shadow-sm border"
@@ -195,6 +202,14 @@ export function MentorshipPage() {
               ))
             )}
           </div>
+          
+          {filtered.length > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={goToPage}
+            />
+          )}
         </div>
 
         <div>

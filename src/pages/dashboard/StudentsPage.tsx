@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Github, Linkedin, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 
 interface Student {
   id: string;
@@ -84,6 +86,11 @@ export default function StudentsPage() {
     return nameMatch || skillsMatch;
   });
 
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({
+    items: filteredStudents,
+    itemsPerPage: 9,
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -121,78 +128,86 @@ export default function StudentsPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudents.map((student) => (
-            <Card key={student.id} className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-semibold text-lg">
-                    {student.full_name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-semibold">{student.full_name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {student.projects_count} projects
-                  </p>
-                </div>
-              </div>
-
-              {student.student_profile?.bio && (
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                  {student.student_profile.bio}
-                </p>
-              )}
-
-              {student.student_profile?.skills && student.student_profile.skills.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-1">
-                    {student.student_profile.skills.slice(0, 4).map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {student.student_profile.skills.length > 4 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{student.student_profile.skills.length - 4}
-                      </Badge>
-                    )}
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {paginatedItems.map((student) => (
+              <Card key={student.id} className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-semibold text-lg">
+                      {student.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{student.full_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {student.projects_count} projects
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <div className="flex gap-2 items-center">
-                {student.student_profile?.github_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(student.student_profile.github_url, '_blank')}
-                  >
-                    <Github className="w-4 h-4" />
-                  </Button>
+                {student.student_profile?.bio && (
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                    {student.student_profile.bio}
+                  </p>
                 )}
-                {student.student_profile?.linkedin_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(student.student_profile.linkedin_url, '_blank')}
-                  >
-                    <Linkedin className="w-4 h-4" />
-                  </Button>
+
+                {student.student_profile?.skills && student.student_profile.skills.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {student.student_profile.skills.slice(0, 4).map((skill, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {student.student_profile.skills.length > 4 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{student.student_profile.skills.length - 4}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 )}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="ml-auto"
-                  onClick={() => navigate(`/dashboard/student/${student.id}`)}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View Full Profile
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+
+                <div className="flex gap-2 items-center">
+                  {student.student_profile?.github_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(student.student_profile.github_url, '_blank')}
+                    >
+                      <Github className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {student.student_profile?.linkedin_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(student.student_profile.linkedin_url, '_blank')}
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-auto"
+                    onClick={() => navigate(`/dashboard/student/${student.id}`)}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Full Profile
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
+        </>
       )}
     </div>
   );

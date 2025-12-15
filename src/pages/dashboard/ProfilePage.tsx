@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../contexts/AuthContext";
-import { Save, User, Upload } from "lucide-react";
+import { Save, User, Upload, FileText, Video, Loader2, X } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,8 @@ export function ProfilePage() {
   const [message, setMessage] = useState("");
   const [profileData, setProfileData] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -121,6 +123,205 @@ export function ProfilePage() {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    // Validate file type (PDF only)
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingResume(true);
+
+    try {
+      // Delete old resume if exists
+      if (profileData?.resume_url) {
+        const oldPath = profileData.resume_url.split('/').slice(-2).join('/');
+        await supabase.storage.from('chat-files').remove([oldPath]);
+      }
+
+      // Upload new resume
+      const fileName = `resumes/${profile.id}/${Date.now()}_${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-files')
+        .getPublicUrl(fileName);
+
+      // Update student profile
+      const { error: updateError } = await supabase
+        .from('student_profiles')
+        .upsert({ id: profile.id, resume_url: publicUrl });
+
+      if (updateError) throw updateError;
+
+      setProfileData({ ...profileData, resume_url: publicUrl });
+      
+      toast({
+        title: "Success",
+        description: "Resume uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload resume",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingResume(false);
+    }
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a video file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a video smaller than 50MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingVideo(true);
+
+    try {
+      // Delete old video if exists
+      if (profileData?.video_intro_url) {
+        const oldPath = profileData.video_intro_url.split('/').slice(-2).join('/');
+        await supabase.storage.from('chat-files').remove([oldPath]);
+      }
+
+      // Upload new video
+      const fileExt = file.name.split('.').pop();
+      const fileName = `videos/${profile.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-files')
+        .getPublicUrl(fileName);
+
+      // Update student profile
+      const { error: updateError } = await supabase
+        .from('student_profiles')
+        .upsert({ id: profile.id, video_intro_url: publicUrl });
+
+      if (updateError) throw updateError;
+
+      setProfileData({ ...profileData, video_intro_url: publicUrl });
+      
+      toast({
+        title: "Success",
+        description: "Video introduction uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload video",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  const removeResume = async () => {
+    if (!profile?.id || !profileData?.resume_url) return;
+
+    try {
+      const oldPath = profileData.resume_url.split('/').slice(-3).join('/');
+      await supabase.storage.from('chat-files').remove([oldPath]);
+
+      await supabase
+        .from('student_profiles')
+        .update({ resume_url: null })
+        .eq('id', profile.id);
+
+      setProfileData({ ...profileData, resume_url: null });
+      
+      toast({
+        title: "Success",
+        description: "Resume removed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove resume",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeVideo = async () => {
+    if (!profile?.id || !profileData?.video_intro_url) return;
+
+    try {
+      const oldPath = profileData.video_intro_url.split('/').slice(-3).join('/');
+      await supabase.storage.from('chat-files').remove([oldPath]);
+
+      await supabase
+        .from('student_profiles')
+        .update({ video_intro_url: null })
+        .eq('id', profile.id);
+
+      setProfileData({ ...profileData, video_intro_url: null });
+      
+      toast({
+        title: "Success",
+        description: "Video removed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove video",
+        variant: "destructive",
+      });
     }
   };
 
@@ -316,6 +517,129 @@ export function ProfilePage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+
+              {/* Resume Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Resume (PDF)
+                </label>
+                {profileData?.resume_url ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <a
+                      href={profileData.resume_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline flex-1 truncate"
+                    >
+                      View Resume
+                    </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeResume}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="resume-upload"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={handleResumeUpload}
+                      disabled={uploadingResume}
+                    />
+                    <label htmlFor="resume-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingResume}
+                        asChild
+                      >
+                        <span className="cursor-pointer">
+                          {uploadingResume ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4 mr-2" />
+                          )}
+                          {uploadingResume ? "Uploading..." : "Upload Resume"}
+                        </span>
+                      </Button>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">PDF only, max 5MB</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Video Introduction Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Video Introduction
+                </label>
+                {profileData?.video_intro_url ? (
+                  <div className="space-y-2">
+                    <video
+                      src={profileData.video_intro_url}
+                      controls
+                      className="w-full max-h-48 rounded-md bg-black"
+                    />
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={profileData.video_intro_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Open in new tab
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeVideo}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="video-upload"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleVideoUpload}
+                      disabled={uploadingVideo}
+                    />
+                    <label htmlFor="video-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingVideo}
+                        asChild
+                      >
+                        <span className="cursor-pointer">
+                          {uploadingVideo ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Video className="w-4 h-4 mr-2" />
+                          )}
+                          {uploadingVideo ? "Uploading..." : "Upload Video"}
+                        </span>
+                      </Button>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Introduce yourself! Max 50MB, 2 minutes recommended
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           )}
