@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
-import { Send, Paperclip } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -44,7 +44,11 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -155,14 +159,77 @@ export default function MessagesPage() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'File size must be less than 10MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const clearFileSelection = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${profile?.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('chat-files')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('chat-files')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !profile) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedConversation || !profile) return;
 
     try {
+      setUploading(true);
+      let fileUrl: string | null = null;
+
+      if (selectedFile) {
+        fileUrl = await uploadFile(selectedFile);
+      }
+
       const { error } = await supabase.from('chat_messages').insert({
         conversation_id: selectedConversation,
         sender_id: profile.id,
-        message: newMessage.trim(),
+        message: newMessage.trim() || (selectedFile ? `Sent a file: ${selectedFile.name}` : ''),
+        file_url: fileUrl,
       });
 
       if (error) throw error;
@@ -179,14 +246,19 @@ export default function MessagesPage() {
           ? conversation.student_id 
           : conversation.mentor_id;
         
+        const notifMessage = selectedFile 
+          ? `${profile.full_name} sent you a file`
+          : `${profile.full_name} sent you a message: "${newMessage.trim().substring(0, 50)}${newMessage.length > 50 ? '...' : ''}"`;
+        
         await supabase.from('notifications').insert({
           user_id: recipientId,
           title: 'New Message',
-          message: `${profile.full_name} sent you a message: "${newMessage.trim().substring(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
+          message: notifMessage,
         });
       }
 
       setNewMessage('');
+      clearFileSelection();
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -194,6 +266,8 @@ export default function MessagesPage() {
         description: 'Failed to send message',
         variant: 'destructive',
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -275,6 +349,7 @@ export default function MessagesPage() {
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwn = message.sender_id === profile?.id;
+                  const isImage = message.file_url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                   return (
                     <div
                       key={message.id}
@@ -287,7 +362,32 @@ export default function MessagesPage() {
                             : 'bg-muted'
                         }`}
                       >
-                        <p className="break-words">{message.message}</p>
+                        {message.file_url && (
+                          <div className="mb-2">
+                            {isImage ? (
+                              <a href={message.file_url} target="_blank" rel="noopener noreferrer">
+                                <img 
+                                  src={message.file_url} 
+                                  alt="Shared image" 
+                                  className="max-w-full rounded-md max-h-60 object-cover"
+                                />
+                              </a>
+                            ) : (
+                              <a 
+                                href={message.file_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-2 p-2 rounded ${isOwn ? 'bg-primary-foreground/20' : 'bg-background'}`}
+                              >
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm underline">Download File</span>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        {message.message && !message.message.startsWith('Sent a file:') && (
+                          <p className="break-words">{message.message}</p>
+                        )}
                         <p
                           className={`text-xs mt-1 ${
                             isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
@@ -305,19 +405,60 @@ export default function MessagesPage() {
 
             {/* Message Input */}
             <div className="p-4 border-t">
+              {/* File Preview */}
+              {selectedFile && (
+                <div className="mb-3 p-2 bg-muted rounded-lg flex items-center gap-3">
+                  {filePreview ? (
+                    <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded" />
+                  ) : (
+                    <div className="w-16 h-16 bg-background rounded flex items-center justify-center">
+                      <FileText className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={clearFileSelection}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-2">
-                <Button variant="outline" size="icon">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.txt"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
                   <Paperclip className="w-4 h-4" />
                 </Button>
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  onKeyPress={(e) => e.key === 'Enter' && !uploading && sendMessage()}
                   placeholder="Type a message..."
                   className="flex-1"
+                  disabled={uploading}
                 />
-                <Button onClick={sendMessage} disabled={!newMessage.trim()}>
-                  <Send className="w-4 h-4" />
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={(!newMessage.trim() && !selectedFile) || uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </div>
