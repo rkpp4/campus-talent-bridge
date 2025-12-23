@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { BookSession } from "@/components/BookSession";
+import { MentorScheduler } from "@/components/MentorScheduler";
 import {
   ArrowLeft,
   Briefcase,
@@ -212,13 +214,14 @@ export function MentorProfilePage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {profile?.role === "student" && (
                   <>
                     <Button onClick={handleRequestMentorship}>
                       <Mail className="w-4 h-4 mr-2" />
                       Request Mentorship
                     </Button>
+                    <BookSession mentorId={id!} mentorName={mentor.full_name} />
                     <Button variant="outline" onClick={handleStartConversation}>
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Message
@@ -281,15 +284,7 @@ export function MentorProfilePage() {
       )}
 
       {/* Availability Section */}
-      {mentor.availability && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Availability
-          </h2>
-          <p className="text-muted-foreground">{mentor.availability}</p>
-        </Card>
-      )}
+      <MentorScheduler mentorId={id} />
     </div>
   );
 }

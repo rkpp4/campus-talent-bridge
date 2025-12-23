@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
+import { ThemeToggle } from './ThemeToggle';
 import {
   Award,
   Home,
@@ -17,6 +18,8 @@ import {
   Search,
   BarChart3,
   MessageCircle,
+  Calendar,
+  ClipboardList,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -48,7 +51,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           ...common.slice(0, 1),
           { icon: FileText, label: 'My Projects', path: '/dashboard/projects' },
           { icon: Briefcase, label: 'Internships', path: '/dashboard/internships' },
+          { icon: ClipboardList, label: 'Applications', path: '/dashboard/my-applications' },
           { icon: Users, label: 'Mentorship', path: '/dashboard/mentorship' },
+          { icon: Calendar, label: 'Sessions', path: '/dashboard/sessions' },
           { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages' },
           { icon: Building2, label: 'Clubs', path: '/dashboard/clubs' },
           { icon: Search, label: 'Explore', path: '/dashboard/explore' },
@@ -58,6 +63,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return [
           ...common.slice(0, 1),
           { icon: Users, label: 'Mentees', path: '/dashboard/mentees' },
+          { icon: Calendar, label: 'Sessions', path: '/dashboard/sessions' },
           { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages' },
           { icon: FileText, label: 'Projects', path: '/dashboard/projects' },
           { icon: Search, label: 'Students', path: '/dashboard/students' },
@@ -198,6 +204,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Sign Out */}
         <div className="p-4 border-t border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Theme</span>
+            <ThemeToggle />
+          </div>
           <button
             onClick={handleSignOut}
             className="flex items-center space-x-3 px-3 py-2 rounded-md text-foreground hover:bg-muted w-full transition-colors"
