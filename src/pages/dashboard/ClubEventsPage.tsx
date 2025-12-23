@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { EventRSVP } from "@/components/EventRSVP";
 
 export default function ClubEventsPage() {
   const { club, events, loading, refreshData } = useClub();
@@ -189,6 +190,7 @@ export default function ClubEventsPage() {
                       </div>
                     )}
                   </div>
+                  <EventRSVP eventId={event.id} />
                 </CardContent>
               </Card>
             ))}
