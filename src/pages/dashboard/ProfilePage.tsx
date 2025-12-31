@@ -333,48 +333,63 @@ export function ProfilePage() {
     try {
       if (profile?.role === "student") {
         const dataToValidate = {
-          ...profileData,
+          bio: profileData?.bio || "",
           skills:
-            typeof profileData.skills === "string"
+            typeof profileData?.skills === "string"
               ? profileData.skills
-              : profileData.skills?.join(", ") || "",
+              : profileData?.skills?.join(", ") || "",
+          github_url: profileData?.github_url || "",
+          linkedin_url: profileData?.linkedin_url || "",
         };
         const validatedData = studentProfileSchema.parse(dataToValidate);
 
         await supabase.from("student_profiles").upsert({
           id: profile.id,
-          ...validatedData,
+          bio: validatedData.bio || null,
           skills: validatedData.skills
-            ? validatedData.skills.split(",").map((s: string) => s.trim())
+            ? validatedData.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
             : [],
+          github_url: validatedData.github_url || null,
+          linkedin_url: validatedData.linkedin_url || null,
         });
       } else if (profile?.role === "mentor") {
         const dataToValidate = {
-          ...profileData,
+          bio: profileData?.bio || "",
           expertise:
-            typeof profileData.expertise === "string"
+            typeof profileData?.expertise === "string"
               ? profileData.expertise
-              : profileData.expertise?.join(", ") || "",
+              : profileData?.expertise?.join(", ") || "",
+          availability: profileData?.availability || "",
+          linkedin_url: profileData?.linkedin_url || "",
+          github_url: profileData?.github_url || "",
         };
         const validatedData = mentorProfileSchema.parse(dataToValidate);
 
         await supabase.from("mentor_profiles").upsert({
           id: profile.id,
-          ...validatedData,
+          bio: validatedData.bio || null,
           expertise: validatedData.expertise
-            ? validatedData.expertise.split(",").map((s: string) => s.trim())
+            ? validatedData.expertise.split(",").map((s: string) => s.trim()).filter(Boolean)
             : [],
+          availability: validatedData.availability || null,
+          linkedin_url: validatedData.linkedin_url || null,
+          github_url: validatedData.github_url || null,
         });
       } else if (profile?.role === "startup") {
-        const validatedData = startupProfileSchema.parse(profileData);
+        const dataToValidate = {
+          company_name: profileData?.company_name || "",
+          description: profileData?.description || "",
+          location: profileData?.location || "",
+          website_url: profileData?.website_url || "",
+        };
+        const validatedData = startupProfileSchema.parse(dataToValidate);
         
-        const { company_name, description, location, website_url } = validatedData;
         await supabase.from("startup_profiles").upsert({
           id: profile.id,
-          company_name,
-          description,
-          location,
-          website_url,
+          company_name: validatedData.company_name,
+          description: validatedData.description || null,
+          location: validatedData.location || null,
+          website_url: validatedData.website_url || null,
         });
       }
 
@@ -491,30 +506,29 @@ export function ProfilePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Major
+                  GitHub URL
                 </label>
                 <input
                   type="text"
-                  value={profileData?.major || ""}
+                  value={profileData?.github_url || ""}
                   onChange={(e) =>
-                    setProfileData({ ...profileData, major: e.target.value })
+                    setProfileData({ ...profileData, github_url: e.target.value })
                   }
+                  placeholder="https://github.com/username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Graduation Year
+                  LinkedIn URL
                 </label>
                 <input
-                  type="number"
-                  value={profileData?.graduation_year || ""}
+                  type="text"
+                  value={profileData?.linkedin_url || ""}
                   onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      graduation_year: parseInt(e.target.value),
-                    })
+                    setProfileData({ ...profileData, linkedin_url: e.target.value })
                   }
+                  placeholder="https://linkedin.com/in/username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -682,17 +696,18 @@ export function ProfilePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Years of Experience
+                  Availability
                 </label>
                 <input
-                  type="number"
-                  value={profileData?.years_of_experience || 0}
+                  type="text"
+                  value={profileData?.availability || ""}
                   onChange={(e) =>
                     setProfileData({
                       ...profileData,
-                      years_of_experience: parseInt(e.target.value),
+                      availability: e.target.value,
                     })
                   }
+                  placeholder="e.g., Weekdays 6-8 PM, Weekends"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -701,7 +716,7 @@ export function ProfilePage() {
                   LinkedIn URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={profileData?.linkedin_url || ""}
                   onChange={(e) =>
                     setProfileData({
@@ -709,6 +724,24 @@ export function ProfilePage() {
                       linkedin_url: e.target.value,
                     })
                   }
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  GitHub URL
+                </label>
+                <input
+                  type="text"
+                  value={profileData?.github_url || ""}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      github_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://github.com/username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -751,19 +784,6 @@ export function ProfilePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Industry
-                </label>
-                <input
-                  type="text"
-                  value={profileData?.industry || ""}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, industry: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Location
                 </label>
                 <input
@@ -780,7 +800,7 @@ export function ProfilePage() {
                   Website URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={profileData?.website_url || ""}
                   onChange={(e) =>
                     setProfileData({
@@ -788,6 +808,7 @@ export function ProfilePage() {
                       website_url: e.target.value,
                     })
                   }
+                  placeholder="https://yourcompany.com"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
