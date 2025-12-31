@@ -34,18 +34,24 @@ export const mentorshipRequestSchema = z.object({
     .max(1000, "Message must be less than 1000 characters"),
 });
 
-// User profile validation schemas
+// Helper for optional URL fields that allows empty strings
+const optionalUrl = z.string().max(255).refine(
+  (val) => !val || val === "" || /^https?:\/\/.+/.test(val),
+  { message: "Invalid URL format" }
+).optional().nullable();
+
+// User profile validation schemas - aligned with database structure
 export const studentProfileSchema = z.object({
   bio: z
     .string()
     .trim()
     .max(1000, "Bio must be less than 1000 characters")
-    .optional(),
-  skills: z.string().max(500, "Skills must be less than 500 characters").optional(),
-  major: z.string().max(100, "Major must be less than 100 characters").optional(),
-  graduation_year: z.number().int().min(2000).max(2100).optional().nullable(),
-  github_url: z.string().url("Invalid URL").max(255).optional().or(z.literal("")),
-  linkedin_url: z.string().url("Invalid URL").max(255).optional().or(z.literal("")),
+    .optional()
+    .nullable(),
+  skills: z.string().max(500, "Skills must be less than 500 characters").optional().nullable(),
+  github_url: optionalUrl,
+  linkedin_url: optionalUrl,
+  // Note: portfolio_links, resume_url, video_intro_url handled separately via file uploads
 });
 
 export const mentorProfileSchema = z.object({
@@ -53,11 +59,12 @@ export const mentorProfileSchema = z.object({
     .string()
     .trim()
     .max(1000, "Bio must be less than 1000 characters")
-    .optional(),
-  expertise: z.string().max(500, "Expertise must be less than 500 characters").optional(),
-  years_of_experience: z.number().int().min(0).max(100).optional().nullable(),
-  linkedin_url: z.string().url("Invalid URL").max(255).optional().or(z.literal("")),
-  github_url: z.string().url("Invalid URL").max(255).optional().or(z.literal("")),
+    .optional()
+    .nullable(),
+  expertise: z.string().max(500, "Expertise must be less than 500 characters").optional().nullable(),
+  availability: z.string().max(500, "Availability must be less than 500 characters").optional().nullable(),
+  linkedin_url: optionalUrl,
+  github_url: optionalUrl,
 });
 
 export const startupProfileSchema = z.object({
@@ -70,10 +77,10 @@ export const startupProfileSchema = z.object({
     .string()
     .trim()
     .max(1000, "Description must be less than 1000 characters")
-    .optional(),
-  industry: z.string().max(100, "Industry must be less than 100 characters").optional(),
-  location: z.string().max(200, "Location must be less than 200 characters").optional(),
-  website_url: z.string().url("Invalid URL").max(255).optional().or(z.literal("")),
+    .optional()
+    .nullable(),
+  location: z.string().max(200, "Location must be less than 200 characters").optional().nullable(),
+  website_url: optionalUrl,
 });
 
 // Club leader validation schema
