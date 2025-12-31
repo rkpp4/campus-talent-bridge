@@ -122,7 +122,7 @@ export function SignupPage() {
                 <option value="student">Student</option>
                 <option value="mentor">Mentor</option>
                 <option value="startup">Startup</option>
-                <option value="club_leader">Club Leader</option>
+                {/* Club Leader role is assigned by admins only */}
               </select>
             </div>
 
