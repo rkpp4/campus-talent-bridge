@@ -29,15 +29,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (!error && data) {
-      setProfile(data as Profile);
+    const [{ data: profileData, error: profileError }, { data: roleData }] =
+      await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).single(),
+        supabase.rpc("get_user_role", { _user_id: userId }),
+      ]);
+
+    if (profileError || !profileData) {
+      setProfile(null);
+      return;
     }
+
+    // IMPORTANT: derive role from user_roles via RPC, not from profiles.role
+    const derivedRole = (roleData as Profile["role"] | null) ?? (profileData.role as Profile["role"]);
+
+    setProfile({
+      ...(profileData as Profile),
+      role: derivedRole,
+    });
   };
 
   const refreshProfile = async () => {
